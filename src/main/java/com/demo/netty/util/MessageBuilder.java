@@ -5,14 +5,14 @@ import com.demo.netty.entity.RequestType;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Method;
-import java.util.Objects;
+import java.util.*;
 
 public class MessageBuilder {
+    private static Map<String,Boolean> SUPPORTED_MAP = new HashMap<>();
 
     public static String buildAgAsMsg(RequestType type, MockDevice device) throws Exception{
         String head = "1*9e|" + type.getFunction();
-        String imeiInfo = "101," + device.getImei();
-        String msg = StringUtils.joinWith("|", head, imeiInfo, buildLoginContentExceptImei(device));
+        String msg = StringUtils.joinWith("|", head, buildLoginContentExceptImei(device));
         msg = StringUtils.removeEnd(msg, "|");
         msg = outQuote(msg);
         return msg;
@@ -27,37 +27,37 @@ public class MessageBuilder {
     }
 
     public static String buildNotSupportResp(String tag) throws Exception{
-        String msg = "1*9e|7,443," + tag + "|";
+        String msg = "1*9e|7|443," + tag + "|";
         msg = outQuote(msg);
         return msg;
     }
 
     public static String buildLoginContentExceptImei(MockDevice device) throws Exception{
         StringBuilder sb = new StringBuilder();
-//        Map<String,String> tagInfoMap = new HashMap();
+        List<String> loginTags = Arrays.asList("106","101","102","103","622","104","105","10d","112");
         Class<?> clazz = MockDevice.class;
-        Method[] methods = clazz.getDeclaredMethods();
-        if (methods.length>0) {
-            for (Method m : methods) {
-                if(StringUtils.countMatches(m.getName(),"getTag")>0){
-                    String tag = StringUtils.substringBetween(m.getName(),"getTag","Info");
-                    String tagInfo = ((String) m.invoke(device));
-//                    tagInfoMap.put(tag,tagInfo);
-                    sb.append(tag);
-                    sb.append(",");
-                    sb.append(tagInfo);
-                    sb.append("|");
-                }
+        for (String tag:loginTags) {
+            String tagInfo = null;
+            if (StringUtils.equals("101",tag)) {
+                tagInfo = device.getImei();
+            }else{
+                String methodName = StringUtils.join("getTag",tag,"Info");
+                Method method = clazz.getDeclaredMethod(methodName);
+                tagInfo = ((String) method.invoke(device));
             }
+            sb.append(tag);
+            sb.append(",");
+            sb.append(tagInfo);
+            sb.append("|");
         }
         return sb.toString();
     }
 
     public static String buildContentByTag(MockDevice device,String tag) throws Exception{
         StringBuilder sb = new StringBuilder();
-        Class<?> clazz = MockDevice.class;
+        Class<?> clazz = device.getClass();
         String methodName = StringUtils.join("getTag", tag, "Info");
-        Method method = clazz.getDeclaredMethod(methodName);
+        Method method = clazz.getMethod(methodName);
         if (Objects.nonNull(method)) {
             String tagInfo = ((String) method.invoke(device));
             sb.append(tag);
@@ -69,26 +69,32 @@ public class MessageBuilder {
     }
 
     public static void deviceInfoSetting(MockDevice device,String tag,String value) throws Exception{
-        StringBuilder sb = new StringBuilder();
-        Class<?> clazz = MockDevice.class;
+        Class<?> clazz = device.getClass();
         String methodName = StringUtils.join("setTag", tag, "Info");
-        Method method = clazz.getDeclaredMethod(methodName,String.class);
+        Method method = clazz.getMethod(methodName,String.class);
         if (Objects.nonNull(method)) {
             method.invoke(device,value);
         }
     }
 
     public static boolean isSupportedTag(MockDevice device,String tag) throws Exception{
-        StringBuilder sb = new StringBuilder();
-        Class<?> clazz = MockDevice.class;
+        String supportedKey = StringUtils.join(device.getImei(),"-", tag);
+        Boolean isSupported = SUPPORTED_MAP.get(supportedKey);
+        if (Objects.nonNull(isSupported)) {
+            return isSupported;
+        }
+        Class<?> clazz = device.getClass();
         String methodName = StringUtils.join("getTag", tag, "Info");
-        Method[] methods = clazz.getDeclaredMethods();
+        Method[] methods = clazz.getMethods();
         for (Method m : methods) {
             if(methodName.equalsIgnoreCase(m.getName())){
+                SUPPORTED_MAP.put(supportedKey,Boolean.TRUE);
                 return true;
             }
         }
+        SUPPORTED_MAP.put(supportedKey,Boolean.FALSE);
         return false;
+
     }
 
 

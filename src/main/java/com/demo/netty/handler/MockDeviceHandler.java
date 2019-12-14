@@ -67,6 +67,7 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                 }
             }else if(StringUtils.countMatches(serverMsg,"|a4|")>0){
                 log.info("登录成功！");
+                resp = MessageBuilder.buildRespMsg(RequestType.PUBLISH,device,"10c");
             }else {
                 String[] units = StringUtils.split(serverMsg,"|");
                 if(units.length<3){
@@ -92,7 +93,6 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                     }
                     resp = MessageBuilder.outQuote(resp);
                     MessageBuilder.deviceInfoSetting(device,tag,value);
-                    log.info("更新后的工作模式：{}", device.getTag223Info());
                 }else if(StringUtils.equals(RequestType.WRITE.getFunction(),function)){
                     //透传设置
                     if(StringUtils.equals("613", tag)){
@@ -116,6 +116,8 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                             resp = MessageBuilder.outQuote(resp);
                         }
                     }
+                }else if(StringUtils.equals(RequestType.PUBLISH_ACK.getFunction(),function)){
+                    //平台的ACK，可以不做任何处理
                 }else {
                     log.error("暂时不支持的消息类型：msg = {}",serverMsg);
                 }
