@@ -14,12 +14,12 @@ public class MockDevice {
     private String tag106Info = "203";
     private String tag10dInfo = "ff3305d93437584d43135027";
     private String tag112Info = "1";
-    //工作模式 1-正常 2-展车 3-深度休眠
+    /**工作模式 1-正常 2-展车 3-深度休眠*/
     private String tag223Info = "2";
     private String tag281Info;
     private String tag282Info;
+    private String tag240Info;
     private String tag613Info;
-
     private String tag315Info = "8_btu.CC2640.0_0702.release.0_BT_M_B1b.0.00_mac1804edfdbb59_300,4_flashkey.v1.1_0481.release.0_OST_TYT_A1b.01.0008_300";
 
 

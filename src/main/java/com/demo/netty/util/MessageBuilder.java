@@ -82,9 +82,11 @@ public class MessageBuilder {
         StringBuilder sb = new StringBuilder();
         Class<?> clazz = MockDevice.class;
         String methodName = StringUtils.join("getTag", tag, "Info");
-        Method method = clazz.getDeclaredMethod(methodName);
-        if (Objects.nonNull(method)) {
-            return true;
+        Method[] methods = clazz.getDeclaredMethods();
+        for (Method m : methods) {
+            if(methodName.equalsIgnoreCase(m.getName())){
+                return true;
+            }
         }
         return false;
     }
