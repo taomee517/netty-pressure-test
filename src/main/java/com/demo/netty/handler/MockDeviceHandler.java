@@ -11,17 +11,18 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 @Data
 @Slf4j
 public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
     private MockDevice device;
-    private String remoteIp;
-    private int remotePort;
+    private static List<String> controlTag = new ArrayList<>(Arrays.asList("511","512","513","514","515","516","517","518","519","51a","51b","51c","51d","51e","51f"));
 
-    public MockDeviceHandler(MockDevice device,String ip,int port) {
+    public MockDeviceHandler(MockDevice device) {
         this.device = device;
-        this.remoteIp = ip;
-        this.remotePort = port;
     }
 
     @Override
@@ -58,6 +59,10 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                     port = Integer.valueOf(portHex,16);
                 }
                 device.setAgFinish(true);
+                String ipNport = device.getTag206Info();
+                String[] ipPortArray = StringUtils.split(ipNport,",");
+                String remoteIp = ipPortArray[0];
+                int remotePort = Integer.valueOf(ipPortArray[1],16);
                 //收到登录服务器地址，如果地址一样，则直接登录，不一样须重新建连
                 if (StringUtils.equals(ip,remoteIp) && remotePort == port) {
                    channelActive(ctx);
@@ -126,6 +131,22 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                     }
                 }else if(StringUtils.equals(RequestType.PUBLISH.getFunction(),function)){
                     resp = MessageBuilder.buildRespMsg(RequestType.PUBLISH_ACK,device,tag);
+                    if(controlTag.contains(tag)){
+                        String resultTag = StringUtils.replace(tag,"51","41");
+
+                        //先变更车辆控制结果
+                        String[] cmdValueArray = StringUtils.split(value, ",");
+                        String serial = cmdValueArray[0];
+                        String executeResult = "1";
+                        String respValue = StringUtils.joinWith(",",executeResult,serial);
+                        MessageBuilder.deviceInfoSetting(device,resultTag,respValue);
+//                        log.info("更新后：411 = {}",device.getTag411Info());
+
+                        //再组装回复内容并回复平台
+                        String controlResult = MessageBuilder.buildRespMsg(RequestType.PUBLISH,device,resultTag);
+                        log.info("控车 ↑↑↑：{}, imei: {}", controlResult, device.getImei());
+                        ctx.writeAndFlush(controlResult);
+                    }
                 }else if(StringUtils.equals(RequestType.PUBLISH_ACK.getFunction(),function)){
                     //平台的ACK，可以不做任何处理
                 }else {

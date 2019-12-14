@@ -22,6 +22,7 @@ public class MessageBuilder {
         String msg;
         if (RequestType.PUBLISH_ACK.equals(type)) {
             msg = StringUtils.joinWith("|", head, tag);
+            msg = StringUtils.join(msg, "|");
         } else {
             msg = StringUtils.joinWith("|", head, buildContentByTag(device,tag));
         }

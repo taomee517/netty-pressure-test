@@ -44,7 +44,7 @@ public class MockClient {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast(new IdleStateHandler(0,10000,0, TimeUnit.MILLISECONDS));
                         pipeline.addLast(new MockDeviceCodec());
-                        pipeline.addLast(new MockDeviceHandler(device,ip,port));
+                        pipeline.addLast(new MockDeviceHandler(device));
                     }
                 });
         try {
