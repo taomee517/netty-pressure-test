@@ -1,9 +1,6 @@
 package com.demo.netty.util;
 
-import com.blackTea.util.log.LogUtil;
 import com.blackTea.util.threadpool.ThreadFactory_UserDefine;
-import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 
 import java.util.concurrent.*;
 

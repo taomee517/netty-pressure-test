@@ -1,6 +1,7 @@
 package com.demo.netty;
 
 import com.demo.netty.entity.Ex223240Device;
+import com.demo.netty.entity.Extend223Device;
 import com.demo.netty.entity.Extend240Device;
 import com.demo.netty.entity.MockDevice;
 import com.demo.netty.server.MockClient;
@@ -29,6 +30,7 @@ public class PressureTest {
 
 //                    MockDevice device = new MockDevice();
 //                    MockDevice device = new Extend240Device();
+//                    MockDevice device = new Extend223Device();
                     MockDevice device = new Ex223240Device();
                     device.setAgFinish(false);
                     device.setImei(imei);

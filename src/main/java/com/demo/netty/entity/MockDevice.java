@@ -16,6 +16,10 @@ public class MockDevice {
     private String tag10dInfo = "ff3305d93437584d43135027";
     private String tag112Info = "1";
     private String tag622Info = "0";
+    private String tag6a3Info;
+
+
+    private String tag206Info;
     private String tag281Info;
     private String tag282Info;
 

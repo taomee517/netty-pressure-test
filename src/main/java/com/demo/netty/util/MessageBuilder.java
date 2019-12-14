@@ -13,15 +13,18 @@ public class MessageBuilder {
     public static String buildAgAsMsg(RequestType type, MockDevice device) throws Exception{
         String head = "1*9e|" + type.getFunction();
         String msg = StringUtils.joinWith("|", head, buildLoginContentExceptImei(device));
-        msg = StringUtils.removeEnd(msg, "|");
         msg = outQuote(msg);
         return msg;
     }
 
     public static String buildRespMsg(RequestType type, MockDevice device, String tag) throws Exception{
         String head = "1*9e|" + type.getFunction();
-        String msg = StringUtils.joinWith("|", head, buildContentByTag(device,tag));
-        msg = StringUtils.removeEnd(msg, "|");
+        String msg;
+        if (RequestType.PUBLISH_ACK.equals(type)) {
+            msg = StringUtils.joinWith("|", head, tag);
+        } else {
+            msg = StringUtils.joinWith("|", head, buildContentByTag(device,tag));
+        }
         msg = outQuote(msg);
         return msg;
     }

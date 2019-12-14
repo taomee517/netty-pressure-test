@@ -9,6 +9,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -24,6 +25,7 @@ public class MockClient {
 
 
     public MockClient(MockDevice device, String ip, int port) {
+        device.setTag206Info(StringUtils.join(ip,",",Integer.toHexString(port)));
         this.device = device;
         this.ip = ip;
         this.port = port;

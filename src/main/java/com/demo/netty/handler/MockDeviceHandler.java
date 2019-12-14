@@ -115,7 +115,17 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                             }
                             resp = MessageBuilder.outQuote(resp);
                         }
+                    }else if(StringUtils.equals("6a3", tag)){
+                        String ipNport = device.getTag206Info();
+                        String[] ipPortArray = StringUtils.split(ipNport,",");
+                        String ip = ipPortArray[0];
+                        int port = Integer.valueOf(ipPortArray[1],16);
+                        log.info("设备重启！");
+                        MockClient client = new MockClient(device,ip,port);
+                        client.connect();
                     }
+                }else if(StringUtils.equals(RequestType.PUBLISH.getFunction(),function)){
+                    resp = MessageBuilder.buildRespMsg(RequestType.PUBLISH_ACK,device,tag);
                 }else if(StringUtils.equals(RequestType.PUBLISH_ACK.getFunction(),function)){
                     //平台的ACK，可以不做任何处理
                 }else {
