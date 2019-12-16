@@ -40,7 +40,7 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        log.error("与平台断连,imei = {}",device.getImei());
+        log.error("与平台断连,imei = {}, channel = {}",device.getImei(), ctx.channel());
         ctx.close();
     }
 
