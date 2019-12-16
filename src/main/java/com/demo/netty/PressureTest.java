@@ -1,10 +1,9 @@
 package com.demo.netty;
 
 import com.demo.netty.entity.Ex223240Device;
-import com.demo.netty.entity.Extend223Device;
-import com.demo.netty.entity.Extend240Device;
 import com.demo.netty.entity.MockDevice;
 import com.demo.netty.server.MockClient;
+import com.demo.netty.util.FileInfoCheckUtil;
 import com.demo.netty.util.ThreadPoolUtil;
 import lombok.extern.slf4j.Slf4j;
 

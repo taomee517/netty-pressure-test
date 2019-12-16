@@ -2,11 +2,14 @@ package com.demo.netty.util;
 
 import com.demo.netty.entity.MockDevice;
 import com.demo.netty.entity.RequestType;
+import io.netty.channel.ChannelHandlerContext;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Method;
 import java.util.*;
 
+@Slf4j
 public class MessageBuilder {
     private static Map<String,Boolean> SUPPORTED_MAP = new HashMap<>();
 
@@ -78,6 +81,26 @@ public class MessageBuilder {
         Method method = clazz.getMethod(methodName,String.class);
         if (Objects.nonNull(method)) {
             method.invoke(device,value);
+        }
+    }
+
+    public static void publishBaseInfo(MockDevice device, ChannelHandlerContext ctx) throws Exception {
+        Class<?> clazz = MockDevice.class;
+        Method[] methods = clazz.getDeclaredMethods();
+        for(Method m: methods){
+            if(StringUtils.countMatches(m.getName(),"getTag1")>0){
+                StringBuilder sb = new StringBuilder();
+                sb.append("1*9e|7|");
+                String tag = StringUtils.substringBetween(m.getName(),"getTag","Info");
+                String value = ((String) m.invoke(device));
+                sb.append(tag);
+                sb.append(",");
+                sb.append(value);
+                sb.append("|");
+                String baseMsg = outQuote(sb.toString());
+                log.info("发布 ↑↑↑：{}，imei= {}",baseMsg,device.getImei());
+                ctx.writeAndFlush(baseMsg);
+            }
         }
     }
 

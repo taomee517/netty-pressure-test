@@ -7,6 +7,7 @@ public class MockDevice {
     private boolean agFinish;
 
     private String imei;
+    private String tag101Info;
     private String tag102Info = "460043206209430";
     private String tag103Info = "89860412101870499429";
     private String tag104Info = "ovt.otubase.103eb,05010913,release";

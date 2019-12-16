@@ -26,6 +26,7 @@ public class MockClient {
 
     public MockClient(MockDevice device, String ip, int port) {
         device.setTag206Info(StringUtils.join(ip,",",Integer.toHexString(port)));
+        device.setTag101Info(device.getImei());
         this.device = device;
         this.ip = ip;
         this.port = port;
@@ -42,7 +43,7 @@ public class MockClient {
                     @Override
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new IdleStateHandler(0,10000,0, TimeUnit.MILLISECONDS));
+                        pipeline.addLast(new IdleStateHandler(0,1000*60*2,0, TimeUnit.MILLISECONDS));
                         pipeline.addLast(new MockDeviceCodec());
                         pipeline.addLast(new MockDeviceHandler(device));
                     }

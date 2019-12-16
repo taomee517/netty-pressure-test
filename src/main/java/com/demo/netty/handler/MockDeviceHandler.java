@@ -40,7 +40,7 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        log.error("与平台断连");
+        log.error("与平台断连,imei = {}",device.getImei());
         ctx.close();
     }
 
@@ -71,8 +71,9 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                     client.connect();
                 }
             }else if(StringUtils.countMatches(serverMsg,"|a4|")>0){
-                log.info("登录成功！");
-                resp = MessageBuilder.buildRespMsg(RequestType.PUBLISH,device,"10c");
+                log.info("设备：{}登录成功！", device.getImei());
+                MessageBuilder.publishBaseInfo(device,ctx);
+//                resp = MessageBuilder.buildRespMsg(RequestType.PUBLISH,device,"10c");
             }else {
                 String[] units = StringUtils.split(serverMsg,"|");
                 if(units.length<3){
