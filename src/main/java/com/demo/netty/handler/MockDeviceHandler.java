@@ -4,6 +4,7 @@ import com.demo.netty.entity.MockDevice;
 import com.demo.netty.entity.RequestType;
 import com.demo.netty.server.MockClient;
 import com.demo.netty.util.MessageBuilder;
+import com.demo.netty.util.ThreadPoolUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -11,6 +12,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.List;
 @Data
 @Slf4j
 public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
+    private MockClient client;
     private MockDevice device;
     private static List<String> controlTag = new ArrayList<>(Arrays.asList("511","512","513","514","515","516","517","518","519","51a","51b","51c","51d","51e","51f"));
 
@@ -73,7 +76,6 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
             }else if(StringUtils.countMatches(serverMsg,"|a4|")>0){
                 log.info("设备：{}登录成功！", device.getImei());
                 MessageBuilder.publishBaseInfo(device,ctx);
-//                resp = MessageBuilder.buildRespMsg(RequestType.PUBLISH,device,"10c");
             }else {
                 String[] units = StringUtils.split(serverMsg,"|");
                 if(units.length<3){
@@ -128,6 +130,7 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                         int port = Integer.valueOf(ipPortArray[1],16);
                         log.info("设备重启！");
                         MockClient client = new MockClient(device,ip,port);
+                        this.client = client;
                         client.connect();
                     }
                 }else if(StringUtils.equals(RequestType.PUBLISH.getFunction(),function)){
@@ -174,9 +177,17 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
-        log.error("MockDeviceHandler处理发生异常：{}",cause);
-        ctx.close();
+        if (cause instanceof ConnectException) {
+            ThreadPoolUtil.pool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    client.connect();
+                }
+            });
+        } else {
+            log.error("MockDeviceHandler处理发生异常：{}", cause);
+            ctx.close();
+        }
     }
 
 

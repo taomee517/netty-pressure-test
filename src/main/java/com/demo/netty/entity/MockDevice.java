@@ -21,6 +21,7 @@ public class MockDevice {
 
 
     private String tag206Info;
+    private String tag20fInfo;
     private String tag281Info;
     private String tag282Info;
 

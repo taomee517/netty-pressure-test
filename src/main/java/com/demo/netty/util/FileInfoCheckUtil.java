@@ -1,6 +1,7 @@
 package com.demo.netty.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -33,7 +34,9 @@ public class FileInfoCheckUtil {
                 // getCell 获取单元格数据
                 XSSFCell protocol = row.getCell(0);
                 if (protocol != null) {
-                    columnData.add(protocol.toString());
+                    if (StringUtils.isNotBlank(protocol.toString())) {
+                        columnData.add(protocol.toString());
+                    }
                 }
             }
         }

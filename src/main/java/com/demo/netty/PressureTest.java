@@ -15,16 +15,17 @@ import java.util.concurrent.ExecutorService;
 public class PressureTest {
     public static void main(String[] args) throws Exception{
         //标明记录压测IMEI号的xls地址
-        String filePath = "E:\\private\\test\\pressure test\\压测设备.xlsx";
-//        List<String> imeis = FileInfoCheckUtil.getColumnData(filePath);
+//        String filePath = "E:\\private\\test\\pressure test\\压测设备.xlsx";
+        String filePath = "E:\\private\\test\\pressure test\\性能测试设备列表蓝牙.xlsx";
+        List<String> imeis = FileInfoCheckUtil.getColumnData(filePath);
 
-        List<String> imeis = Arrays.asList("156888885818333");
+//        List<String> imeis = Arrays.asList("156888885818333");
         ExecutorService executor = ThreadPoolUtil.pool;
         for (String imei: imeis) {
             executor.submit(new Runnable() {
                 @Override
                 public void run() {
-                    String ip = "192.168.2.61";
+                    String ip = "127.0.0.1";
                     int port = 2103;
 
 //                    MockDevice device = new MockDevice();

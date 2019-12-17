@@ -3,6 +3,7 @@ package com.demo.netty.server;
 import com.demo.netty.entity.MockDevice;
 import com.demo.netty.handler.MockDeviceCodec;
 import com.demo.netty.handler.MockDeviceHandler;
+import com.demo.netty.util.ThreadPoolUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -11,6 +12,8 @@ import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -25,7 +28,10 @@ public class MockClient {
 
 
     public MockClient(MockDevice device, String ip, int port) {
-        device.setTag206Info(StringUtils.join(ip,",",Integer.toHexString(port)));
+        if (!Boolean.TRUE.equals(device.isAgFinish())) {
+            device.setTag206Info(StringUtils.join(ip,",",Integer.toHexString(port)));
+            device.setTag20fInfo(StringUtils.join(ip,",",Integer.toHexString(port)));
+        }
         device.setTag101Info(device.getImei());
         this.device = device;
         this.ip = ip;
@@ -52,7 +58,13 @@ public class MockClient {
             ChannelFuture channelFuture = bootstrap.connect(ip,port).sync();
             this.channel = channelFuture.channel();
         } catch (InterruptedException e) {
-            log.error(String.format("连接Server(IP[%s],PORT[%s])失败", ip, port), e);
+//            log.error(String.format("连接Server(IP[%s],PORT[%s])失败", ip, port), e);
+            ThreadPoolUtil.pool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    connect();
+                }
+            });
         }
     }
 
