@@ -93,7 +93,7 @@ public class MockDevice {
 
 
     private String tag613Info;
-    private String tag315Info = "8_btu.CC2640.0_0702.release.0_BT_M_B1b.0.00_mac1804edfdbb59_300,4_flashkey.v1.1_0481.release.0_OST_TYT_A1b.01.0008_300";
+    private String tag315Info = "8_btu.CC2640.0_0402.release.0_BT_M_B1b.0.00_mac1804edfdbb59_300,4_flashkey.v1.1_0481.release.0_OST_TYT_A1b.01.0008_300";
 
 
 

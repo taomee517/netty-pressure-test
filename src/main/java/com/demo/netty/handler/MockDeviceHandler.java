@@ -3,11 +3,14 @@ package com.demo.netty.handler;
 import com.demo.netty.entity.MockDevice;
 import com.demo.netty.entity.RequestType;
 import com.demo.netty.server.MockClient;
+import com.demo.netty.util.HashedWheelTimerUtil;
 import com.demo.netty.util.MessageBuilder;
 import com.demo.netty.util.ThreadPoolUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.Timeout;
+import io.netty.util.TimerTask;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -16,6 +19,9 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static com.demo.netty.util.HashedWheelTimerUtil.DELAY_TIME;
 
 @Data
 @Slf4j
@@ -24,7 +30,8 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
     private MockDevice device;
     private static List<String> controlTag = new ArrayList<>(Arrays.asList("511","512","513","514","515","516","517","518","519","51a","51b","51c","51d","51e","51f"));
 
-    public MockDeviceHandler(MockDevice device) {
+    public MockDeviceHandler(MockClient client, MockDevice device) {
+        this.client = client;
         this.device = device;
     }
 
@@ -44,13 +51,25 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         log.error("与平台断连,imei = {}, channel = {}",device.getImei(), ctx.channel());
-        ctx.close();
+        if (device.isAgFinish()) {
+            HashedWheelTimerUtil.instance().getTimer().newTimeout(new TimerTask() {
+                @Override
+                public void run(Timeout timeout) {
+                    log.info("掉线重连,imei = {}",device.getImei());
+                    device.setAgFinish(false);
+                    client.setDevice(device);
+                    client.connect();
+                }
+            },DELAY_TIME,TimeUnit.MILLISECONDS);
+        }
+
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         String serverMsg = msg.toString();
         log.info("SERVER ↓↓↓: {}, imei: {}", serverMsg, device.getImei());
+        log.info("时间轮任务：{}", HashedWheelTimerUtil.instance().getTimer().pendingTimeouts());
         String resp = null;
         if(StringUtils.isNotBlank(serverMsg)){
             if (StringUtils.countMatches(serverMsg,"|a2|621")>0) {
@@ -167,23 +186,25 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        IdleStateEvent event = (IdleStateEvent)evt;
-        if(event.equals(IdleStateEvent.WRITER_IDLE_STATE_EVENT)){
-            String heatbeat = "()";
-            log.info("心跳 ↑↑↑：{}, imei: {}", heatbeat, device.getImei());
-            ctx.channel().writeAndFlush(heatbeat);
+        if (evt instanceof IdleStateEvent) {
+            IdleStateEvent event = (IdleStateEvent)evt;
+            if(event.equals(IdleStateEvent.WRITER_IDLE_STATE_EVENT)){
+                String heatbeat = "()";
+                log.info("心跳 ↑↑↑：{}, imei: {}", heatbeat, device.getImei());
+                ctx.channel().writeAndFlush(heatbeat);
+            }
         }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         if (cause instanceof ConnectException) {
-            ThreadPoolUtil.pool.submit(new Runnable() {
+            HashedWheelTimerUtil.instance().getTimer().newTimeout(new TimerTask() {
                 @Override
-                public void run() {
+                public void run(Timeout timeout) {
                     client.connect();
                 }
-            });
+            },DELAY_TIME,TimeUnit.MILLISECONDS);
         } else {
             log.error("MockDeviceHandler处理发生异常：{}", cause);
             ctx.close();

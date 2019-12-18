@@ -3,20 +3,23 @@ package com.demo.netty.server;
 import com.demo.netty.entity.MockDevice;
 import com.demo.netty.handler.MockDeviceCodec;
 import com.demo.netty.handler.MockDeviceHandler;
-import com.demo.netty.util.ThreadPoolUtil;
+import com.demo.netty.util.HashedWheelTimerUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.Timeout;
+import io.netty.util.TimerTask;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static com.demo.netty.util.HashedWheelTimerUtil.DELAY_TIME;
+
 @Slf4j
+@Data
 public class MockClient {
     private MockDevice device;
     private String ip;
@@ -38,11 +41,11 @@ public class MockClient {
         this.port = port;
         this.workers = Runtime.getRuntime().availableProcessors()*2;
         this.eventLoopGroup = new NioEventLoopGroup(workers);
-        this.bootstrap = new Bootstrap();
     }
 
 
-    public void connect() {
+    public Bootstrap buildBootstrap(){
+        Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(eventLoopGroup)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<NioSocketChannel>() {
@@ -51,22 +54,28 @@ public class MockClient {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast(new IdleStateHandler(0,1000*60*2,0, TimeUnit.MILLISECONDS));
                         pipeline.addLast(new MockDeviceCodec());
-                        pipeline.addLast(new MockDeviceHandler(device));
+                        pipeline.addLast(new MockDeviceHandler(MockClient.this,device));
                     }
                 });
+        return bootstrap;
+    }
+
+    public void connect() {
+        this.bootstrap = buildBootstrap();
         try {
             ChannelFuture channelFuture = bootstrap.connect(ip,port).sync();
             this.channel = channelFuture.channel();
-        } catch (InterruptedException e) {
-//            log.error(String.format("连接Server(IP[%s],PORT[%s])失败", ip, port), e);
-            ThreadPoolUtil.pool.submit(new Runnable() {
+        } catch (Exception e) {
+            HashedWheelTimerUtil.instance().getTimer().newTimeout(new TimerTask() {
                 @Override
-                public void run() {
+                public void run(Timeout timeout) {
+                    log.info("连接失败，重连");
                     connect();
                 }
-            });
+            },DELAY_TIME,TimeUnit.MILLISECONDS);
         }
     }
+
 
     public void stop(){
         try {
