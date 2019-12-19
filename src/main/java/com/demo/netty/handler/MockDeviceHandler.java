@@ -52,15 +52,15 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         log.error("与平台断连,imei = {}, channel = {}",device.getImei(), ctx.channel());
         if (device.isAgFinish()) {
-            HashedWheelTimerUtil.instance().getTimer().newTimeout(new TimerTask() {
+            ThreadPoolUtil.pool.submit(new Runnable() {
                 @Override
-                public void run(Timeout timeout) {
+                public void run() {
                     log.info("掉线重连,imei = {}",device.getImei());
                     device.setAgFinish(false);
                     client.setDevice(device);
                     client.connect();
                 }
-            },DELAY_TIME,TimeUnit.MILLISECONDS);
+            });
         }
 
     }
@@ -69,7 +69,7 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         String serverMsg = msg.toString();
         log.info("SERVER ↓↓↓: {}, imei: {}", serverMsg, device.getImei());
-        log.info("时间轮任务：{}", HashedWheelTimerUtil.instance().getTimer().pendingTimeouts());
+//        log.info("时间轮任务：{}", HashedWheelTimerUtil.instance().getTimer().pendingTimeouts());
         String resp = null;
         if(StringUtils.isNotBlank(serverMsg)){
             if (StringUtils.countMatches(serverMsg,"|a2|621")>0) {
@@ -199,12 +199,12 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         if (cause instanceof ConnectException) {
-            HashedWheelTimerUtil.instance().getTimer().newTimeout(new TimerTask() {
+            ThreadPoolUtil.pool.submit(new Runnable() {
                 @Override
-                public void run(Timeout timeout) {
+                public void run() {
                     client.connect();
                 }
-            },DELAY_TIME,TimeUnit.MILLISECONDS);
+            });
         } else {
             log.error("MockDeviceHandler处理发生异常：{}", cause);
             ctx.close();

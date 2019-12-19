@@ -4,6 +4,7 @@ import com.demo.netty.entity.MockDevice;
 import com.demo.netty.handler.MockDeviceCodec;
 import com.demo.netty.handler.MockDeviceHandler;
 import com.demo.netty.util.HashedWheelTimerUtil;
+import com.demo.netty.util.ThreadPoolUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -66,13 +67,13 @@ public class MockClient {
             ChannelFuture channelFuture = bootstrap.connect(ip,port).sync();
             this.channel = channelFuture.channel();
         } catch (Exception e) {
-            HashedWheelTimerUtil.instance().getTimer().newTimeout(new TimerTask() {
+            ThreadPoolUtil.pool.submit(new Runnable() {
                 @Override
-                public void run(Timeout timeout) {
+                public void run() {
                     log.info("连接失败，重连");
                     connect();
                 }
-            },DELAY_TIME,TimeUnit.MILLISECONDS);
+            });
         }
     }
 

@@ -5,6 +5,7 @@ import com.demo.netty.entity.MockDevice;
 import com.demo.netty.server.MockClient;
 import com.demo.netty.util.FileInfoCheckUtil;
 import com.demo.netty.util.HashedWheelTimerUtil;
+import com.demo.netty.util.ThreadPoolUtil;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.demo.netty.util.HashedWheelTimerUtil.DELAY_TIME;
@@ -25,16 +27,19 @@ public class PressureTest {
     public static void main(String[] args) throws Exception {
         //标明记录压测IMEI号的xls地址
         String filePath = "E:\\private\\test\\pressure test\\压测设备.xlsx";
-//        List<String> imeis = FileInfoCheckUtil.getColumnData(filePath);
+        List<String> imeis = FileInfoCheckUtil.getColumnData(filePath);
 
-        List<String> imeis = Arrays.asList("865328026651330","864244028008257");
-        //创建Timer, 精度为100毫秒,
-        HashedWheelTimer timer = HashedWheelTimerUtil.instance().getTimer();
+//        List<String> imeis = Arrays.asList("865328026651330","864244028008257");
+        int delaySign = 16;
+        ExecutorService executor = ThreadPoolUtil.pool;
         for (int i = 0; i < imeis.size(); i++) {
+            if(i%delaySign==0){
+                Thread.sleep(2000);
+            }
             String imei = imeis.get(i);
-            TimerTask task = new TimerTask() {
+            Runnable task = new Runnable() {
                 @Override
-                public void run(Timeout timeout) throws Exception {
+                public void run(){
                     MockDevice device = new Ex223240Device();
                     device.setAgFinish(false);
                     device.setImei(imei);
@@ -43,7 +48,7 @@ public class PressureTest {
                     client.connect();
                 }
             };
-            timer.newTimeout(task, DELAY_TIME, TimeUnit.MILLISECONDS);
+            executor.submit(task);
         }
     }
 }
