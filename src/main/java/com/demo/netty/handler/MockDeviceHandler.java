@@ -29,16 +29,8 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-//        String msg = null;
-//        if (device.isAgFinish()) {
-//            msg = MessageBuilder.buildAgAsMsg(RequestType.AS,device);
-//            log.info("登录 ↑↑↑：{}, imei: {}", msg, device.getImei());
-//        }else {
-//            msg = MessageBuilder.buildAgAsMsg(RequestType.AG,device);
-//            log.info("寻址 ↑↑↑：{}, imei: {}", msg, device.getImei());
-//        }
-//        ctx.writeAndFlush(msg);
-        log.info("channel active");
+        MockDevice device = (MockDevice) ChannelSession.get(ctx.channel(),ChannelSession.DEVICE);
+        log.info("channel active，imei = {}", device.getImei());
     }
 
     @Override

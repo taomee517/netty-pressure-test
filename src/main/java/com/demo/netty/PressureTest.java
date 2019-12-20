@@ -4,6 +4,7 @@ import com.demo.netty.entity.Ex223240Device;
 import com.demo.netty.entity.MockDevice;
 import com.demo.netty.entity.RequestType;
 import com.demo.netty.server.MockClient;
+import com.demo.netty.util.FileInfoCheckUtil;
 import com.demo.netty.util.MessageBuilder;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
@@ -20,11 +21,11 @@ public class PressureTest {
 
     public static void main(String[] args) throws Exception {
         //标明记录压测IMEI号的xls地址
-//        String filePath = "E:\\private\\test\\pressure test\\压测设备.xlsx";
-//        List<String> imeis = FileInfoCheckUtil.getColumnData(filePath);
+        String filePath = "E:\\private\\test\\pressure test\\测试设备.xlsx";
+        List<String> imeis = FileInfoCheckUtil.getColumnData(filePath);
 
 //        List<String> imeis = Arrays.asList("865328026651330");
-        List<String> imeis = Arrays.asList("156888888888833","156888888888811");
+//        List<String> imeis = Arrays.asList("156888888888833","156888888888811");
         int delaySign = 16;
         for (int i = 0; i < imeis.size(); i++) {
             if(i%delaySign==0){
