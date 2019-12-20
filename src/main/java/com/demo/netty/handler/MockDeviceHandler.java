@@ -29,8 +29,7 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        MockDevice device = (MockDevice) ChannelSession.get(ctx.channel(),ChannelSession.DEVICE);
-        log.info("channel active，imei = {}", device.getImei());
+        log.info("channel active，channel = {}", ctx.channel());
     }
 
     @Override

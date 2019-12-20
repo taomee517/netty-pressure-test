@@ -14,14 +14,14 @@ import java.util.List;
 
 @Slf4j
 public class PressureTest {
-    private static String ip = "192.168.6.232";
+//    private static String ip = "192.168.6.232";
 //        private static String ip = "127.0.0.1";
-//    private static String ip = "192.168.2.61";
+    private static String ip = "192.168.2.61";
     private static int port = 2103;
 
     public static void main(String[] args) throws Exception {
         //标明记录压测IMEI号的xls地址
-        String filePath = "E:\\private\\test\\pressure test\\测试设备.xlsx";
+        String filePath = "E:\\private\\test\\pressure test\\压测设备.xlsx";
         List<String> imeis = FileInfoCheckUtil.getColumnData(filePath);
 
 //        List<String> imeis = Arrays.asList("865328026651330");
