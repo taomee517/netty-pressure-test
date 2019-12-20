@@ -23,7 +23,7 @@ public class MockClient {
     private MockDevice device;
     private String ip;
     private int port;
-    private static int workers = Runtime.getRuntime().availableProcessors()*2;
+    private static int workers = Runtime.getRuntime().availableProcessors()*8;
     private static EventLoopGroup eventLoopGroup = new NioEventLoopGroup(workers);
     private static Bootstrap bootstrap = buildBootstrap();
 
@@ -65,7 +65,7 @@ public class MockClient {
             ScheduledFuture<Channel> channelScheduledFuture = ThreadPoolUtil.schedule.schedule(new Callable<Channel>() {
                 @Override
                 public Channel call() {
-                    log.info("连接失败，重连");
+                    log.info("连接失败，重连,imei= {}",device.getImei());
                     return connect();
                 }
             },5,TimeUnit.SECONDS);

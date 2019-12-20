@@ -44,7 +44,6 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
         if (device.isAgFinish() && Objects.nonNull(sameServer)) {
             MockClient client = (MockClient) ChannelSession.get(ctx.channel(),ChannelSession.CLIENT);
             ScheduledFuture<Channel> channelScheduledFuture = ThreadPoolUtil.schedule.schedule((Callable<Channel>) () -> {
-                log.info("与平台断连，重连");
                 return client.connect();
             },5, TimeUnit.SECONDS);
 

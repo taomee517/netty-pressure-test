@@ -33,19 +33,16 @@ public class FileInfoCheckUtil {
             if (row != null) {
                 // getCell 获取单元格数据
                 XSSFCell protocol = row.getCell(0);
+                String cellData = protocol.toString();
                 if (protocol != null) {
-                    if (protocol != null) {
+                    if (StringUtils.countMatches(cellData,"E")>0) {
                         columnData.add(protocol.getRawValue());
+                    }else {
+                        columnData.add(cellData);
                     }
                 }
             }
         }
         return columnData;
-
-        // 获取每个Sheet表
-//        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-//            sheet = workbook.getSheetAt(i);
-            // getLastRowNum，获取最后一行的行标
-//        }
     }
 }

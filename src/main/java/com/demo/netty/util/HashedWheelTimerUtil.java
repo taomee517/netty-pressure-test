@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 @Getter
 public class HashedWheelTimerUtil {
-    public static final int DELAY_TIME = 1000;
+    public static final int DELAY_TIME = 5000;
 
     private HashedWheelTimer timer = new HashedWheelTimer(100, TimeUnit.MILLISECONDS);
     private static class SingletonHolder {
