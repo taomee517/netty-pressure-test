@@ -34,8 +34,15 @@ public class FileInfoCheckUtil {
                 // getCell 获取单元格数据
                 XSSFCell protocol = row.getCell(0);
                 if (protocol != null) {
-                    if (StringUtils.isNotBlank(protocol.toString())) {
-                        columnData.add(protocol.toString());
+                    if (protocol != null) {
+                        String cellInfo = protocol.toString();
+                        if (StringUtils.isNotBlank(cellInfo)) {
+                            if(StringUtils.countMatches(cellInfo,"E")>0) {
+                                cellInfo = StringUtils.substringBefore(cellInfo, "E");
+                                cellInfo = StringUtils.replace(cellInfo, ".", "");
+                            }
+                            columnData.add(cellInfo);
+                        }
                     }
                 }
             }
