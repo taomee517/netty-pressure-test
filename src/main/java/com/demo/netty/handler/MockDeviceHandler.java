@@ -3,64 +3,71 @@ package com.demo.netty.handler;
 import com.demo.netty.entity.MockDevice;
 import com.demo.netty.entity.RequestType;
 import com.demo.netty.server.MockClient;
-import com.demo.netty.util.HashedWheelTimerUtil;
+import com.demo.netty.util.ChannelSession;
 import com.demo.netty.util.MessageBuilder;
 import com.demo.netty.util.ThreadPoolUtil;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.util.Timeout;
-import io.netty.util.TimerTask;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
-import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import static com.demo.netty.util.HashedWheelTimerUtil.DELAY_TIME;
 
 @Data
 @Slf4j
 public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
-    private MockClient client;
-    private MockDevice device;
     private static List<String> controlTag = new ArrayList<>(Arrays.asList("511","512","513","514","515","516","517","518","519","51a","51b","51c","51d","51e","51f"));
-
-    public MockDeviceHandler(MockClient client, MockDevice device) {
-        this.client = client;
-        this.device = device;
-    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        String msg = null;
-        if (device.isAgFinish()) {
-            msg = MessageBuilder.buildAgAsMsg(RequestType.AS,device);
-            log.info("登录 ↑↑↑：{}, imei: {}", msg, device.getImei());
-        }else {
-            msg = MessageBuilder.buildAgAsMsg(RequestType.AG,device);
-            log.info("寻址 ↑↑↑：{}, imei: {}", msg, device.getImei());
-        }
-        ctx.writeAndFlush(msg);
+//        String msg = null;
+//        if (device.isAgFinish()) {
+//            msg = MessageBuilder.buildAgAsMsg(RequestType.AS,device);
+//            log.info("登录 ↑↑↑：{}, imei: {}", msg, device.getImei());
+//        }else {
+//            msg = MessageBuilder.buildAgAsMsg(RequestType.AG,device);
+//            log.info("寻址 ↑↑↑：{}, imei: {}", msg, device.getImei());
+//        }
+//        ctx.writeAndFlush(msg);
+        log.info("channel active");
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        log.error("与平台断连,imei = {}, channel = {}",device.getImei(), ctx.channel());
-        if (device.isAgFinish()) {
-            ThreadPoolUtil.pool.submit(new Runnable() {
-                @Override
-                public void run() {
-                    log.info("掉线重连,imei = {}",device.getImei());
-                    device.setAgFinish(false);
-                    client.setDevice(device);
-                    client.connect();
+        MockDevice device = (MockDevice) ChannelSession.get(ctx.channel(),ChannelSession.DEVICE);
+        Boolean sameServer = (Boolean)ChannelSession.get(ctx.channel(),ChannelSession.SAME_SERVER);
+        if (Objects.nonNull(sameServer)) {
+            log.error("与平台断连,imei = {}, channel = {}",device.getImei(), ctx.channel());
+        }else {
+            log.error("与寻址平台断连,imei = {}, channel = {}",device.getImei(), ctx.channel());
+        }
+        if (device.isAgFinish() && Objects.nonNull(sameServer)) {
+            MockClient client = (MockClient) ChannelSession.get(ctx.channel(),ChannelSession.CLIENT);
+            ScheduledFuture<Channel> channelScheduledFuture = ThreadPoolUtil.schedule.schedule((Callable<Channel>) () -> {
+                log.info("与平台断连，重连");
+                return client.connect();
+            },5, TimeUnit.SECONDS);
+
+            try {
+                Channel channel = channelScheduledFuture.get();
+                if(Objects.nonNull(channel)){
+                    ChannelSession.put(channel,ChannelSession.DEVICE,device);
+                    ChannelSession.put(channel,ChannelSession.CLIENT,client);
                 }
-            });
+                String msg = MessageBuilder.buildAgAsMsg(RequestType.AG,device);
+                channel.writeAndFlush(msg);
+            } catch (Exception ex) {
+                log.error("重连发生异常：{}",ex);
+            }
         }
 
     }
@@ -68,8 +75,8 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         String serverMsg = msg.toString();
+        MockDevice device = (MockDevice) ChannelSession.get(ctx.channel(),ChannelSession.DEVICE);
         log.info("SERVER ↓↓↓: {}, imei: {}", serverMsg, device.getImei());
-//        log.info("时间轮任务：{}", HashedWheelTimerUtil.instance().getTimer().pendingTimeouts());
         String resp = null;
         if(StringUtils.isNotBlank(serverMsg)){
             if (StringUtils.countMatches(serverMsg,"|a2|621")>0) {
@@ -85,15 +92,26 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                 String[] ipPortArray = StringUtils.split(ipNport,",");
                 String remoteIp = ipPortArray[0];
                 int remotePort = Integer.valueOf(ipPortArray[1],16);
+
                 //收到登录服务器地址，如果地址一样，则直接登录，不一样须重新建连
+                Channel channel = null;
+                Boolean sameServer = false;
                 if (StringUtils.equals(ip,remoteIp) && remotePort == port) {
-                   channelActive(ctx);
+                    channel = ctx.channel();
+                    ChannelSession.put(channel,ChannelSession.DEVICE,device);
+                    sameServer = Boolean.TRUE;
                 }else{
                     MockClient client = new MockClient(device,ip,port);
-                    client.connect();
+                    channel = client.connect();
+                }
+                if (Objects.nonNull(channel)) {
+                    ChannelSession.put(channel,ChannelSession.SAME_SERVER,sameServer);
+                    String asMsg = MessageBuilder.buildAgAsMsg(RequestType.AS,device);
+                    channel.writeAndFlush(asMsg);
                 }
             }else if(StringUtils.countMatches(serverMsg,"|a4|")>0){
                 log.info("设备：{}登录成功！", device.getImei());
+                //更新设备在线状态 self-define
                 MessageBuilder.publishBaseInfo(device,ctx);
             }else {
                 String[] units = StringUtils.split(serverMsg,"|");
@@ -149,7 +167,6 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                         int port = Integer.valueOf(ipPortArray[1],16);
                         log.info("设备重启！");
                         MockClient client = new MockClient(device,ip,port);
-                        this.client = client;
                         client.connect();
                     }
                 }else if(StringUtils.equals(RequestType.PUBLISH.getFunction(),function)){
@@ -186,6 +203,7 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        MockDevice device = (MockDevice) ChannelSession.get(ctx.channel(),ChannelSession.DEVICE);
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent)evt;
             if(event.equals(IdleStateEvent.WRITER_IDLE_STATE_EVENT)){
@@ -198,17 +216,8 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        if (cause instanceof ConnectException) {
-            ThreadPoolUtil.pool.submit(new Runnable() {
-                @Override
-                public void run() {
-                    client.connect();
-                }
-            });
-        } else {
-            log.error("MockDeviceHandler处理发生异常：{}", cause);
-            ctx.close();
-        }
+        log.error("MockDeviceHandler处理发生异常：{}", cause);
+        ctx.close();
     }
 
 

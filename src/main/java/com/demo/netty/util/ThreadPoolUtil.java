@@ -15,4 +15,6 @@ public class ThreadPoolUtil {
     public static ThreadFactory threadFactory = new ThreadFactory_UserDefine("PressureTest");
     public static final ExecutorService pool = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors()*2,Runtime.getRuntime().availableProcessors()*2,0L, TimeUnit.SECONDS,
             new LinkedBlockingDeque<>(1024),threadFactory);
+
+    public static final ScheduledThreadPoolExecutor schedule = new ScheduledThreadPoolExecutor(8);
 }

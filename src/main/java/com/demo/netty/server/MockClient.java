@@ -3,21 +3,19 @@ package com.demo.netty.server;
 import com.demo.netty.entity.MockDevice;
 import com.demo.netty.handler.MockDeviceCodec;
 import com.demo.netty.handler.MockDeviceHandler;
-import com.demo.netty.util.HashedWheelTimerUtil;
+import com.demo.netty.util.ChannelSession;
 import com.demo.netty.util.ThreadPoolUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.Timeout;
-import io.netty.util.TimerTask;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import java.util.concurrent.TimeUnit;
 
-import static com.demo.netty.util.HashedWheelTimerUtil.DELAY_TIME;
+import java.util.Objects;
+import java.util.concurrent.*;
 
 @Slf4j
 @Data
@@ -25,10 +23,9 @@ public class MockClient {
     private MockDevice device;
     private String ip;
     private int port;
-    private int workers;
-    private EventLoopGroup eventLoopGroup;
-    private Bootstrap bootstrap;
-    private Channel channel;
+    private static int workers = Runtime.getRuntime().availableProcessors()*2;
+    private static EventLoopGroup eventLoopGroup = new NioEventLoopGroup(workers);
+    private static Bootstrap bootstrap = buildBootstrap();
 
 
     public MockClient(MockDevice device, String ip, int port) {
@@ -40,12 +37,10 @@ public class MockClient {
         this.device = device;
         this.ip = ip;
         this.port = port;
-        this.workers = Runtime.getRuntime().availableProcessors()*2;
-        this.eventLoopGroup = new NioEventLoopGroup(workers);
     }
 
 
-    public Bootstrap buildBootstrap(){
+    public static Bootstrap buildBootstrap(){
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(eventLoopGroup)
                 .channel(NioSocketChannel.class)
@@ -55,32 +50,43 @@ public class MockClient {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast(new IdleStateHandler(0,1000*60*2,0, TimeUnit.MILLISECONDS));
                         pipeline.addLast(new MockDeviceCodec());
-                        pipeline.addLast(new MockDeviceHandler(MockClient.this,device));
+                        pipeline.addLast(new MockDeviceHandler());
                     }
                 });
         return bootstrap;
     }
 
-    public void connect() {
-        this.bootstrap = buildBootstrap();
+    public Channel connect() {
+        Channel channel = null;
         try {
             ChannelFuture channelFuture = bootstrap.connect(ip,port).sync();
-            this.channel = channelFuture.channel();
+            channel = channelFuture.channel();
         } catch (Exception e) {
-            ThreadPoolUtil.pool.submit(new Runnable() {
+            ScheduledFuture<Channel> channelScheduledFuture = ThreadPoolUtil.schedule.schedule(new Callable<Channel>() {
                 @Override
-                public void run() {
+                public Channel call() {
                     log.info("连接失败，重连");
-                    connect();
+                    return connect();
                 }
-            });
+            },5,TimeUnit.SECONDS);
+
+            try {
+                channel = channelScheduledFuture.get();
+            } catch (Exception ex) {
+                log.error("重连发生异常：{}",ex);
+            }
+        }finally {
+            if(Objects.nonNull(channel)){
+                ChannelSession.put(channel,ChannelSession.DEVICE,device);
+                ChannelSession.put(channel,ChannelSession.CLIENT,this);
+            }
+            return channel;
         }
     }
 
 
     public void stop(){
         try {
-            channel.close();
             eventLoopGroup.shutdownGracefully();
             eventLoopGroup = null;
             bootstrap = null;
