@@ -35,14 +35,7 @@ public class FileInfoCheckUtil {
                 XSSFCell protocol = row.getCell(0);
                 if (protocol != null) {
                     if (protocol != null) {
-                        String cellInfo = protocol.toString();
-                        if (StringUtils.isNotBlank(cellInfo)) {
-                            if(StringUtils.countMatches(cellInfo,"E")>0) {
-                                cellInfo = StringUtils.substringBefore(cellInfo, "E");
-                                cellInfo = StringUtils.replace(cellInfo, ".", "");
-                            }
-                            columnData.add(cellInfo);
-                        }
+                        columnData.add(protocol.getRawValue());
                     }
                 }
             }
