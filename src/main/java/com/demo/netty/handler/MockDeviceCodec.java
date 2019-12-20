@@ -17,7 +17,29 @@ public class MockDeviceCodec extends ByteToMessageCodec<String> {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        String msg = OTUCodecUtil.Byte2StringSerialize(in);
-        out.add(msg);
+        try {
+            String msg = OTUCodecUtil.Byte2StringSerialize(in);
+            out.add(msg);
+        } finally {
+            resetBuffer(ctx,in);
+        }
+    }
+
+
+    /**
+     * 移动指针到开始位置
+     *
+     * @param ctx
+     * @param in
+     */
+    private void resetBuffer(ChannelHandlerContext ctx, ByteBuf in) {
+        int left = in.readableBytes();
+        int start = in.readerIndex();
+        if (left > 0 && in.readerIndex() > 0) {
+            for (int index = 0; index < left; index++) {
+                in.setByte(index, in.getByte(index + start));
+            }
+            in.setIndex(0, left);
+        }
     }
 }
