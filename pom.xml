@@ -60,73 +60,11 @@
             <artifactId>poi-ooxml</artifactId>
             <version>${poi-version}</version>
         </dependency>
-        <!--blacktea-commom-->
-        <dependency>
-            <groupId>com.iot</groupId>
-            <artifactId>blackTea-common</artifactId>
-            <version>${blacktea-common-version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>otu-sdk</artifactId>
-                    <groupId>com.fzk</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>log4j-over-slf4j</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>mongodb-driver-core</artifactId>
-                    <groupId>org.mongodb</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>mongodb-driver</artifactId>
-                    <groupId>org.mongodb</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>netty</artifactId>
-                    <groupId>io.netty</groupId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-slf4j-impl</artifactId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>fzk-logger</artifactId>
-                    <groupId>com.fzk</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>sdk-base</artifactId>
-                    <groupId>com.fzk</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>fastjson</artifactId>
-                    <groupId>com.alibaba</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>logback-classic</artifactId>
-                    <groupId>ch.qos.logback</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>jboss-logging</artifactId>
-                    <groupId>org.jboss.logging</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
     </dependencies>
     <distributionManagement>
         <repository>
-            <id>nexus-releases</id>
-            <name>Nexus Releases Repository</name>
-            <url>http://192.168.6.86:81/nexus/content/repositories/releases/</url>
+            <id>my-lib-repo</id>
+            <url>http://cqfuzik.ticp.net:8083/nexus/content/repositories/releases</url>
         </repository>
-        <snapshotRepository>
-            <id>nexus-snapshots</id>
-            <name>Nexus Snapshots Repository</name>
-            <url>http://192.168.6.86:81/nexus/content/repositories/snapshots/</url>
-        </snapshotRepository>
     </distributionManagement>
 </project>

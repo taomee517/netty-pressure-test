@@ -1,6 +1,6 @@
 package com.demo.netty.util;
 
-import com.blackTea.util.threadpool.ThreadFactory_UserDefine;
+import io.netty.util.concurrent.DefaultThreadFactory;
 
 import java.util.concurrent.*;
 
@@ -12,7 +12,7 @@ import java.util.concurrent.*;
  * @time 11:12
  */
 public class ThreadPoolUtil {
-    public static ThreadFactory threadFactory = new ThreadFactory_UserDefine("PressureTest");
+    public static ThreadFactory threadFactory = new DefaultThreadFactory("PressureTest");
     public static final ExecutorService pool = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors()*2,Runtime.getRuntime().availableProcessors()*2,0L, TimeUnit.SECONDS,
             new LinkedBlockingDeque<>(1024),threadFactory);
 
