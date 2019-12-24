@@ -48,7 +48,7 @@ public class MockClient {
                     @Override
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new IdleStateHandler(0,1000*60*2,0, TimeUnit.MILLISECONDS));
+                        pipeline.addLast(new IdleStateHandler(0,1000*20,0, TimeUnit.MILLISECONDS));
                         pipeline.addLast(new MockDeviceCodec());
                         pipeline.addLast(new MockDeviceHandler());
                     }

@@ -25,6 +25,8 @@ public class MockDevice {
     private String tag281Info;
     private String tag282Info;
 
+    private String tag331Info = "12090d03092f,1,E,10629.7228,N,2937.1144,0,0,9,2200,2222222,22222,000000,110,22,1,7454,0,212,505";
+
     private String tag443Info;
 
     /**控制及执行结果*/

@@ -119,7 +119,7 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                     resp = MessageBuilder.buildNotSupportResp(tag);
                 }else if(StringUtils.equals(RequestType.QUERY.getFunction(),function)){
                     //查询
-                    resp = MessageBuilder.buildRespMsg(RequestType.QUERY_ACK,device,tag);
+                    resp = MessageBuilder.buildMessage(RequestType.QUERY_ACK,device,tag);
                 }else if(StringUtils.equals(RequestType.SETTING.getFunction(),function)){
                     //设置
                     resp = StringUtils.replace(serverMsg,"|3|","|4|");
@@ -160,7 +160,7 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                         client.connect();
                     }
                 }else if(StringUtils.equals(RequestType.PUBLISH.getFunction(),function)){
-                    resp = MessageBuilder.buildRespMsg(RequestType.PUBLISH_ACK,device,tag);
+                    resp = MessageBuilder.buildMessage(RequestType.PUBLISH_ACK,device,tag);
                     if(controlTag.contains(tag)){
                         String resultTag = StringUtils.replace(tag,"51","41");
 
@@ -173,7 +173,7 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
 //                        log.info("更新后：411 = {}",device.getTag411Info());
 
                         //再组装回复内容并回复平台
-                        String controlResult = MessageBuilder.buildRespMsg(RequestType.PUBLISH,device,resultTag);
+                        String controlResult = MessageBuilder.buildMessage(RequestType.PUBLISH,device,resultTag);
                         log.info("控车 ↑↑↑：{}, imei: {}", controlResult, device.getImei());
                         ctx.writeAndFlush(controlResult);
                     }
@@ -197,9 +197,14 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent)evt;
             if(event.equals(IdleStateEvent.WRITER_IDLE_STATE_EVENT)){
-                String heatbeat = "()";
-                log.info("心跳 ↑↑↑：{}, imei: {}", heatbeat, device.getImei());
-                ctx.channel().writeAndFlush(heatbeat);
+//                String heatbeat = "()";
+//                log.info("心跳 ↑↑↑：{}, imei: {}", heatbeat, device.getImei());
+//                ctx.channel().writeAndFlush(heatbeat);
+
+                //331状态消息
+                String statusMsg = MessageBuilder.buildMessage(RequestType.PUBLISH,device,"331");
+                log.info("定位 ↑↑↑：{}, imei: {}", statusMsg, device.getImei());
+                ctx.channel().writeAndFlush(statusMsg);
             }
         }
     }

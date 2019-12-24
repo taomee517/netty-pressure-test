@@ -20,7 +20,7 @@ public class MessageBuilder {
         return msg;
     }
 
-    public static String buildRespMsg(RequestType type, MockDevice device, String tag) throws Exception{
+    public static String buildMessage(RequestType type, MockDevice device, String tag) throws Exception{
         String head = "1*9e|" + type.getFunction();
         String msg;
         if (RequestType.PUBLISH_ACK.equals(type)) {
