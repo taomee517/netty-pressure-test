@@ -23,6 +23,7 @@ public class MockClient {
     private MockDevice device;
     private String ip;
     private int port;
+
     private static int workers = Runtime.getRuntime().availableProcessors()*8;
     private static EventLoopGroup eventLoopGroup = new NioEventLoopGroup(workers);
     private static Bootstrap bootstrap = buildBootstrap();

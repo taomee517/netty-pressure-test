@@ -13,6 +13,7 @@ public class ChannelSession {
     public static final String DEVICE = "device";
     public static final String CLIENT = "client";
     public static final String SAME_SERVER = "sameServer";
+    public static final String RECONNECT = "reconnect";
 
     private static synchronized void initQueue(Channel ctx) {
         ConcurrentHashMap<String, Object> map = ctx.attr(SESSION_KEY).get();

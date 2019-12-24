@@ -25,36 +25,44 @@ import java.util.concurrent.TimeUnit;
 @Data
 @Slf4j
 public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
+    //最终维护的channel
+    private Channel channel;
+    //控制相关的标签
     private static List<String> controlTag = new ArrayList<>(Arrays.asList("511","512","513","514","515","516","517","518","519","51a","51b","51c","51d","51e","51f"));
+
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        this.channel = ctx.channel();
         log.info("channel active，channel = {}", ctx.channel());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        MockClient client = (MockClient) ChannelSession.get(ctx.channel(),ChannelSession.CLIENT);
         MockDevice device = (MockDevice) ChannelSession.get(ctx.channel(),ChannelSession.DEVICE);
-        Boolean sameServer = (Boolean)ChannelSession.get(ctx.channel(),ChannelSession.SAME_SERVER);
-        if (Objects.nonNull(sameServer)) {
+        if (Objects.equals(ctx.channel(),this.channel)) {
             log.error("与平台断连,imei = {}, channel = {}",device.getImei(), ctx.channel());
         }else {
             log.error("与寻址平台断连,imei = {}, channel = {}",device.getImei(), ctx.channel());
         }
-        if (device.isAgFinish() && Objects.nonNull(sameServer)) {
-            MockClient client = (MockClient) ChannelSession.get(ctx.channel(),ChannelSession.CLIENT);
+        //如果正在重连就不用再添加重连任务了
+        Boolean isReconnect = ((Boolean) ChannelSession.get(channel, ChannelSession.RECONNECT));
+        if(Objects.nonNull(isReconnect) && isReconnect){
+            return;
+        }
+        if (!(Objects.nonNull(this.channel) && this.channel.isActive())) {
+            ChannelSession.put(channel,ChannelSession.RECONNECT,Boolean.TRUE);
             ScheduledFuture<Channel> channelScheduledFuture = ThreadPoolUtil.schedule.schedule((Callable<Channel>) () -> {
                 return client.connect();
             },5, TimeUnit.SECONDS);
 
             try {
                 Channel channel = channelScheduledFuture.get();
-                if(Objects.nonNull(channel)){
-                    ChannelSession.put(channel,ChannelSession.DEVICE,device);
-                    ChannelSession.put(channel,ChannelSession.CLIENT,client);
+                if (Objects.nonNull(channel)) {
+                    String msg = MessageBuilder.buildAgAsMsg(RequestType.AG,device);
+                    channel.writeAndFlush(msg);
                 }
-                String msg = MessageBuilder.buildAgAsMsg(RequestType.AG,device);
-                channel.writeAndFlush(msg);
             } catch (Exception ex) {
                 log.error("重连发生异常：{}",ex);
             }
@@ -85,17 +93,15 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
 
                 //收到登录服务器地址，如果地址一样，则直接登录，不一样须重新建连
                 Channel channel = null;
-                Boolean sameServer = false;
                 if (StringUtils.equals(ip,remoteIp) && remotePort == port) {
                     channel = ctx.channel();
                     ChannelSession.put(channel,ChannelSession.DEVICE,device);
-                    sameServer = Boolean.TRUE;
                 }else{
                     MockClient client = new MockClient(device,ip,port);
                     channel = client.connect();
                 }
                 if (Objects.nonNull(channel)) {
-                    ChannelSession.put(channel,ChannelSession.SAME_SERVER,sameServer);
+                    this.channel = channel;
                     String asMsg = MessageBuilder.buildAgAsMsg(RequestType.AS,device);
                     channel.writeAndFlush(asMsg);
                 }
