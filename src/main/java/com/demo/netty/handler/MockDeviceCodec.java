@@ -19,6 +19,7 @@ public class MockDeviceCodec extends ByteToMessageCodec<String> {
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         try {
             String msg = OTUCodecUtil.Byte2StringSerialize(in);
+//            msg = ConvertUtil.decrypt(msg);
             out.add(msg);
         } finally {
             resetBuffer(ctx,in);

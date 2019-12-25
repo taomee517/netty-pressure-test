@@ -25,9 +25,9 @@ import java.util.concurrent.TimeUnit;
 @Data
 @Slf4j
 public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
-    //最终维护的channel
+    /**最终维护的channel*/
     private Channel channel;
-    //控制相关的标签
+    /**控制相关的标签*/
     private static List<String> controlTag = new ArrayList<>(Arrays.asList("511","512","513","514","515","516","517","518","519","51a","51b","51c","51d","51e","51f"));
 
 
@@ -103,6 +103,7 @@ public class MockDeviceHandler extends ChannelInboundHandlerAdapter {
                 if (Objects.nonNull(channel)) {
                     this.channel = channel;
                     String asMsg = MessageBuilder.buildAgAsMsg(RequestType.AS,device);
+                    log.info("登录 ↑↑↑：{}，imei = {}",msg,device.getImei());
                     channel.writeAndFlush(asMsg);
                 }
             }else if(StringUtils.countMatches(serverMsg,"|a4|")>0){
