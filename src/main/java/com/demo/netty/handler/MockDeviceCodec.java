@@ -7,6 +7,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageCodec;
 
 import java.util.List;
+import java.util.Objects;
 
 public class MockDeviceCodec extends ByteToMessageCodec<String> {
     @Override
@@ -20,9 +21,13 @@ public class MockDeviceCodec extends ByteToMessageCodec<String> {
         try {
             String msg = OTUCodecUtil.Byte2StringSerialize(in);
 //            msg = ConvertUtil.decrypt(msg);
-            out.add(msg);
+            if (Objects.nonNull(msg)) {
+                out.add(msg);
+            }
         } finally {
             resetBuffer(ctx,in);
+            //验证与resetbuffer效果是否一致 todo
+//            in.discardSomeReadBytes();
         }
     }
 
