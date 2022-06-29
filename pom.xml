@@ -15,7 +15,7 @@
         <slf4j-version>1.7.28</slf4j-version>
         <netty-version>4.1.32.Final</netty-version>
         <lombok-version>1.18.10</lombok-version>
-        <poi-version>3.9</poi-version>
+        <poi-version>4.1.1</poi-version>
         <commons-lang3-version>3.8.1</commons-lang3-version>
         <blacktea-common-version>2.4.5</blacktea-common-version>
     </properties>
